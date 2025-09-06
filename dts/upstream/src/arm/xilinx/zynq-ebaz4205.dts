@@ -9,11 +9,14 @@
 	model = "Ebang EBAZ4205";
 	compatible = "ebang,ebaz4205", "xlnx,zynq-7000";
 
+	interrupt-parent = <&intc>;
+
 	aliases {
 		ethernet0 = &gem0;
 		serial0 = &uart1;
 		serial1 = &uart0;
 		mmc0 = &sdhci0;
+		spi0 = &spi0;
 	};
 
 	memory@0 {
@@ -100,7 +103,7 @@
 		};
 	};
 
-	beeper {
+	beeper: beeper {
 		compatible = "pwm-beeper";
 		pwms = <&ttc0 0 370370 0>; /* 2.7 kHz, normal polarity */
 	};
@@ -140,6 +143,27 @@
 	status = "okay";
 };
 
+&spi0 {
+	status = "okay";
+
+	st7789v@0 {
+		compatible = "sitronix,st7789v";
+		reg = <0>;
+		buswidth = <8>;
+		spi-max-frequency = <32000000>;
+		spi-cpol;
+		spi-cpha;
+		/* control pins */
+		reset-gpios = <&gpio0 64 GPIO_ACTIVE_LOW>;
+		dc-gpios = <&gpio0 65 GPIO_ACTIVE_HIGH>;
+        led-gpios = <&gpio0 66 GPIO_ACTIVE_HIGH>;
+		/* optional: rotation, init data via bindings */
+		width = <240>;
+		height = <240>;
+		rotation = <180>; /* can be 0 / 90 / 180 / 270 */
+	};
+};
+
 &uart0 {
 	status = "okay";
 	u-boot,dm-pre-reloc;
@@ -148,4 +172,56 @@
 &uart1 {
 	status = "okay";
 	u-boot,dm-pre-reloc;
+};
+
+/ {
+	amba: axi {
+		compatible = "simple-bus";
+		#address-cells = <0x1>;
+		#size-cells = <0x1>;
+		ranges;
+
+		hdmi_sink_dma: dma@7c420000 {
+			compatible = "adi,axi-dmac-1.00.a";
+			reg = <0x7c420000 0x10000>;
+			#dma-cells = <1>;
+			interrupts = <0 56 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&clkc 15>;
+
+			adi,channels {
+				#size-cells = <0>;
+				#address-cells = <1>;
+
+				dma-channel@0 {
+					reg = <0>;
+					adi,source-bus-width = <64>;
+					adi,source-bus-type = <0>;
+					adi,destination-bus-width = <64>;
+					adi,destination-bus-type = <1>;
+				};
+			};
+		};
+
+		mwipcore0: mwipcore@0 {
+			compatible = "mathworks,mwipcore-v3.00";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			stream-channel@0 {
+				reg = <0x0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "mathworks,axi4stream-mm2s-channel-v1.00";
+				dmas = <&hdmi_sink_dma 0>;
+				dma-names = "hdmi_sink";
+				mathworks,dev-name = "hdmi_sink";
+
+				data-channel@0 {
+					reg = <0x0>;
+					compatible = "mathworks,iio-data-channel-v1.00";
+					mathworks,data-format = "u8/8>>0";
+				};
+			};
+		};
+	};
 };
