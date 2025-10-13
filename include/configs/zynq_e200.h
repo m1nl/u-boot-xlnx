@@ -20,7 +20,7 @@
 	"boot_image=BOOT.bin\0" \
 	"loadbit_addr=0x100000\0" \
 	"loadbootenv_addr=0x2000000\0" \
-	"fit_size=0x900000\0" \
+	"fit_size=0x1E00000\0" \
 	"devicetree_size=0x20000\0" \
 	"ramdisk_size=0x400000\0" \
 	"bitstream_size=0x400000\0" \
@@ -29,8 +29,7 @@
 	"initrd_high=0x20000000\0" \
 	"bootenv=uEnv.txt\0" \
 	"maxcpus=2\0" \
-    "fdt_overlays=\0" \
-	"clear_reset_cause=mw f8000008 df0d && mw f8000258 00400000 && mw f8000004 767b\0" \
+	"fdt_overlays=\0" \
 	"loadbootenv=load mmc 0 ${loadbootenv_addr} ${bootenv}\0" \
 	"importbootenv=echo Importing environment from SD ...; " \
 		"env import -t ${loadbootenv_addr} $filesize\0" \
@@ -60,7 +59,7 @@
 		"if test -n \"${cs_gpio}\" && test \"${model}\" = \"Microphase AntSDR E200 Rev.C (Z7020/AD936x)\"; then " \
 			"fdt set /fpga-axi@0/spi@7C430000/ cs-gpios \"<0x06 ${cs_gpio} 0>\"; " \
 		"fi; " \
-        "true; \0" \
+		"true; \0" \
 	"adi_loadvals=fdt addr ${fit_load_address} && fdt get value fdt_choosen /configurations/${fit_config}/ fdt && " \
 		"fdt get addr fdtaddr /images/${fdt_choosen} data && fdt addr ${fdtaddr} && " \
 		"fdt get value model / model && " \
@@ -73,31 +72,14 @@
 	"read_sf=sf probe 0:0 50000000 0 && run qspiboot_extraenv &&" \
 		"sf read ${fit_load_address} 0x200000 ${fit_size} && " \
 		"iminfo ${fit_load_address} || " \
-		"sf read ${fit_load_address} 0x200000  0x1E00000; \0" \
-	"ramboot_verbose=echo Copying Linux from DFU to RAM... && " \
-		"run dfu_ram;" \
+		"sf read ${fit_load_address} 0x200000 0x1E00000; \0" \
+	"qspiboot=echo Copying Linux from QSPI flash to RAM... && " \
+		"run read_sf &&" \
 		"if run adi_loadvals; then " \
-		"echo Loaded AD936x model into devicetree; " \
-		"fi; " \
-		"setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} isolcpus=1 rootfstype=ramfs root=/dev/ram0 rw earlyprintk clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
-		"bootm ${fit_load_address}#${fit_config}; \0" \
-	"qspiboot_verbose=echo Copying Linux from QSPI flash to RAM... && " \
-		"run read_sf && " \
-		"if run adi_loadvals; then " \
-		"echo Loaded AD936x model into devicetree; " \
-		"fi; " \
-		"setenv bootargs console=ttyPS0,115200 maxcpus=${maxcpus} isolcpus=1 rootfstype=ramfs root=/dev/ram0 rw earlyprintk clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
-		"bootm ${fit_load_address}#${fit_config} || echo BOOT failed entering DFU mode ... && run dfu_sf; \0" \
-	"qspiboot=set stdout serial@e0000000;" \
-		"itest *f8000258 == 480003 && run clear_reset_cause && sf probe && sf protect unlock 0 100000 && run dfu_sf; " \
-		"itest *f8000258 == 480007 && run clear_reset_cause && run ramboot_verbose; " \
-		"itest *f8000258 == 480006 && run clear_reset_cause && run qspiboot_verbose; " \
-		"itest *f8000258 == 480002 && run clear_reset_cause && exit; " \
-		"echo Booting silently && set stdout nulldev; " \
-		"run read_sf && run adi_loadvals; " \
-		"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} isolcpus=1 rootfstype=ramfs root=/dev/ram0 rw clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
-		"bootm ${fit_load_address}#${fit_config} || set stdout serial@e0000000;echo BOOT failed entering DFU mode ... && sf protect lock 0 100000 && run dfu_sf; \0" \
-	"jtagboot=env default -a;sf probe && sf protect unlock 0 100000 && run dfu_sf; \0" \
+			"echo Loaded AD936x model into devicetree; " \
+		"fi && " \
+		"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} isolcpus=1 rootfstype=ramfs root=/dev/ram0 rwclk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
+		"bootm ${fit_load_address}#${fit_config} || echo BOOT failed; \0" \
 	"uenvboot=" \
 		"if run loadbootenv; then " \
 			"echo Loaded environment from ${bootenv}; " \
@@ -117,7 +99,7 @@
 				"echo Loaded AD936x model into devicetree; " \
 			"fi && " \
 			"run apply_fdt_overlays_sdcard && " \
-			"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} root=/dev/mmcblk0p2 rw clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
+			"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} root=/dev/mmcblk0p2 rootwait rw clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
 			"bootm ${fit_load_address} - ${devicetree_load_address}; " \
 		"fi; \0" \
 	"apply_fdt_overlays_sdcard=" \
