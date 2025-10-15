@@ -78,7 +78,7 @@
 		"if run adi_loadvals; then " \
 			"echo Loaded AD936x model into devicetree; " \
 		"fi && " \
-		"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} isolcpus=1 rootfstype=ramfs root=/dev/ram0 rwclk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
+		"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} isolcpus=1 root=/dev/ram0 rw clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
 		"bootm ${fit_load_address}#${fit_config} || echo BOOT failed; \0" \
 	"uenvboot=" \
 		"if run loadbootenv; then " \
@@ -99,7 +99,7 @@
 				"echo Loaded AD936x model into devicetree; " \
 			"fi && " \
 			"run apply_fdt_overlays_sdcard && " \
-			"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} root=/dev/mmcblk0p2 rootwait rw clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
+			"setenv bootargs \"console=ttyPS0,115200 maxcpus=${maxcpus} isolcpus=1 root=/dev/mmcblk0p2 rootwait rw clk_ignore_unused uio_pdrv_genirq.of_id=uio_pdrv_genirq\" && " \
 			"bootm ${fit_load_address} - ${devicetree_load_address}; " \
 		"fi; \0" \
 	"apply_fdt_overlays_sdcard=" \
