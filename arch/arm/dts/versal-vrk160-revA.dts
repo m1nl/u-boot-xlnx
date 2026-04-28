@@ -23,8 +23,8 @@
 	};
 
 	chosen {
-		bootargs = "console=ttyAMA1 earlycon=pl011,mmio32,0xFF010000,115200n8";
-		stdout-path = "serial1:115200";
+		bootargs = "console=ttyAMA0 earlycon=pl011,mmio32,0xFF000000,115200n8";
+		stdout-path = "serial0:115200";
 	};
 
 	reserved-memory {
@@ -44,7 +44,6 @@
 
 	aliases {
 		serial0 = &serial0;
-		serial1 = &serial1;
 		serial2 = &dcc;
 		i2c0 = &i2c0;
 		i2c1 = &i2c1;
@@ -160,11 +159,7 @@
 	no-1-8-v;
 };
 
-&serial0 { /* PMC_MIO42/43 - BOARD_I2C0 */
-	status = "okay";
-};
-
-&serial1 { /* PMC_MIO38/39 - BOARD_I2C0 */
+&serial0 { /* PMC_MIO38/39 - BOARD_I2C0 */
 	status = "okay";
 };
 
